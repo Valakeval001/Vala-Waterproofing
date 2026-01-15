@@ -11,8 +11,11 @@ CORS(app)
 
 CSV_FILE = "contacts.csv"
 
+# ================= EMAIL CONFIG =================
 OWNER_EMAIL = "keval50582@gmail.com"
-EMAIL_PASSWORD = "ivtj xecf syrv tgsj"   # Gmail App Password
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")  # ✅ ENV VARIABLE
+# ===============================================
+
 
 # ================= CSV HEADER FIX =================
 def init_csv():
@@ -33,6 +36,10 @@ init_csv()
 
 
 def send_email(data):
+    if not EMAIL_PASSWORD:
+        print("⚠️ EMAIL_PASSWORD not set, skipping email")
+        return
+
     msg = EmailMessage()
     msg["Subject"] = "📩 New Contact – VALA Waterproofing"
     msg["From"] = OWNER_EMAIL
@@ -41,23 +48,39 @@ def send_email(data):
     msg.set_content(f"""
 New enquiry received 👇
 
-Name   : {data['name']}
-Email  : {data['email']}
-Phone  : {data['phone']}
-Place  : {data['place']}
+Name   : {data.get('name')}
+Email  : {data.get('email')}
+Phone  : {data.get('phone')}
+Place  : {data.get('place')}
 
 Message:
-{data['message']}
+{data.get('message')}
 """)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(OWNER_EMAIL, EMAIL_PASSWORD)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(OWNER_EMAIL, EMAIL_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        print("❌ Email error:", e)
+
+
+# ================= ROUTES =================
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "status": "Backend is running",
+        "service": "Vala Waterproofing API"
+    })
 
 
 @app.route("/contact", methods=["POST"])
 def contact():
     data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
     with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -72,8 +95,9 @@ def contact():
 
     send_email(data)
 
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success"}), 200
 
+
+# ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-
