@@ -13,7 +13,7 @@ CSV_FILE = "contacts.csv"
 
 # ================= EMAIL CONFIG =================
 OWNER_EMAIL = "keval50582@gmail.com"
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")  # ✅ ENV VARIABLE
+EMAIL_PASSWORD = "ivtj xecf syrv tgsj"  # ✅ ENV VARIABLE
 # ===============================================
 
 
